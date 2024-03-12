@@ -1,29 +1,32 @@
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 
 from app.schemas.preset import Preset
 from app.core.logger_config import get_logger
-from app import Process
+from app.clients.process_manager import ProcessManager
+from app.api import deps
+
 
 router = APIRouter()
 
 logger = get_logger(__name__)
 
-build_process = Process()
 
-@router.post("/build/start", status_code=200) #TODO: shouldn't it be 201?
-async def start_build(preset: Preset, background_tasks: BackgroundTasks): #TODO: add restirct
-    global build_process
-    await build_process.start(f"dflowd build_bot --preset {preset.body}")
-    background_tasks.add_task(build_process.check_status)
-    return {"status": "ok", "process_id":str(build_process.process.pid)}
+@router.post("/build/start", status_code=201)
+async def start_build(preset: Preset, process_manager: ProcessManager = Depends(deps.get_process_manager)):
+    await process_manager.start(f"dflowd build_bot --preset {preset.body}")
+    pid = list(process_manager.processes.keys())[-1]  # Get the PID of the last started process
+    return {"status": "ok", "pid": pid}
 
-
-@router.get("/build/stop", status_code=200)
-async def stop_build():
-    """Stop a build."""
-    global build_process
-    if build_process.process is not None:
-        build_process.stop()
-    else:
-        raise HTTPException(status_code=400, detail="build/stop endpoint was requested before build/start")
+@router.get("/build/stop/{pid}", status_code=200)
+async def stop_build(pid: int, process_manager: ProcessManager = Depends(deps.get_process_manager)):
+    if pid not in process_manager.processes:
+        raise HTTPException(status_code=404, detail="Process not found")
+    process_manager.stop(pid)
     return {"status": "ok"}
+
+@router.get("/build/status/{pid}", status_code=200)
+async def check_status(pid: int, process_manager: ProcessManager = Depends(deps.get_process_manager)):
+    if pid not in process_manager.processes:
+        raise HTTPException(status_code=404, detail="Process not found")
+    status = process_manager.processes[pid].check_status()
+    return {"status": status}
