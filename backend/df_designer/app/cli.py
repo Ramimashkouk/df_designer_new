@@ -3,10 +3,11 @@ import json
 import os
 import subprocess
 import typer
-import uvicorn
 
 from app.core.config import settings
+from app.core.logger_config import get_logger
 
+logger = get_logger(__name__)
 
 cli = typer.Typer()
 
@@ -21,15 +22,18 @@ def build_bot(
 
     if preset in presets_build_file:
         command_to_run = presets_build_file[preset]["cmd"]
-        print(f"Running command for preset '{preset}': {command_to_run}")
+        logger.info("Executing command for preset '%s': %s", preset, command_to_run)
 
-        try:
-            subprocess.run(command_to_run, shell=True, check=True)
-        except subprocess.CalledProcessError as e:
-            print(f"Error executing command: {e}")
+        process = subprocess.run(command_to_run, shell=True, check=False)
+        if process.returncode > 0:
+            logger.error(
+                "Execution of command `%s` was unsuccessful. Exited with code '%s'",
+                command_to_run,
+                process.returncode,
+            )
             # TODO: inform ui
     else:
-        print(f"Preset '{preset}' not found in build.json.")
+        raise ValueError(f"Invalid preset '{preset}'. Preset must be one of {list(presets_build_file.keys())}")
 
 
 #### TODO: move to DB DIR
@@ -39,10 +43,7 @@ def build_bot(
 #     Base.metadata.create_all(engine)
 
 
-def _setup_backend(ip_address: str, port: int, dir_logs: str, cmd_to_run: str, conf_reload: str, project_dir: str) -> None:
-    """Set up the application configurations."""
-    # settings.cmd_to_run = cmd_to_run
-    # settings.dir_logs = dir_logs
+def _setup_backend(ip_address: str, port: int, conf_reload: str, project_dir: str) -> None:
     settings.WORK_DIRECTORY = project_dir # TODO: set a function for setting the value
     # setup_database(project_dir)
     settings.setup_server(ip_address, port, conf_reload, project_dir)
@@ -57,11 +58,9 @@ async def _run_server() -> None:
 def run_backend(
     ip_address: str = settings.HOST,
     port: int = settings.BACKEND_PORT,
-    dir_logs: str = settings.DIR_LOGS,
-    cmd_to_run: str = settings.CMD_TO_RUN,
     conf_reload: str = str(settings.CONF_RELOAD),
     project_dir: str = settings.WORK_DIRECTORY,
 ) -> None:
     """Run the backend."""
-    _setup_backend(ip_address, port, dir_logs, cmd_to_run, conf_reload, project_dir)
+    _setup_backend(ip_address, port, conf_reload, project_dir)
     settings.server.run()

@@ -10,17 +10,15 @@ class Settings(BaseSettings):
     HOST: str = "127.0.0.1"
     BACKEND_PORT: int = 8000
     UI_PORT: int = 3000
-    LOG_LEVEL: str = "info"
-    CONF_RELOAD: bool = True
-    DIR_LOGS: str = "logs"   ### Ensure this's needed
+    LOG_LEVEL: str = "debug"
+    CONF_RELOAD: bool = True # Enable auto-reload for development mode
+    DIR_LOGS: str = f"{WORK_DIRECTORY}/logs.log"   #TODO: Ensure this's a good path
     # database_file = "database.sqlite"
-    CMD_TO_RUN: str = ""    ### Ensure this's needed
     server: uvicorn.Server = uvicorn.Server(
-        uvicorn.Config(APP, HOST, BACKEND_PORT, LOG_LEVEL, CONF_RELOAD, WORK_DIRECTORY)
+        uvicorn.Config(APP, HOST, BACKEND_PORT, LOG_LEVEL, CONF_RELOAD, reload_dirs=WORK_DIRECTORY)
     )
     
     def setup_server(self, ip_address: str, port: int, conf_reload: str, project_dir: str) -> None:
-        """Set up the server."""
         config = uvicorn.Config(
             app=self.APP,
             host=ip_address,
