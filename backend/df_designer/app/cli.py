@@ -36,6 +36,44 @@ def build_bot(
         raise ValueError(f"Invalid preset '{preset}'. Preset must be one of {list(presets_build_file.keys())}")
 
 
+@cli.command("run_bot")
+def run_bot(
+    project_dir: str = settings.WORK_DIRECTORY,
+    preset: str = "success"
+):
+    presets_run_path = os.path.join(project_dir, "df_designer", "presets", "run.json")
+    with open(presets_run_path) as file:
+        presets_run_file = json.load(file)
+
+    if preset in presets_run_file:
+        command_to_run = presets_run_file[preset]["cmd"]
+        logger.info("Executing command for preset '%s': %s", preset, command_to_run)
+
+        process = subprocess.run(command_to_run, shell=True, check=False)
+        if process.returncode > 0:
+            logger.error(
+                "Execution of command `%s` was unsuccessful. Exited with code '%s'",
+                command_to_run,
+                process.returncode,
+            )
+            # TODO: inform ui
+    else:
+        raise ValueError(f"Invalid preset '{preset}'. Preset must be one of {list(presets_run_file.keys())}")
+
+
+@cli.command("run_scenario")
+def run_scenario(
+    project_dir: str = "."
+):
+    process = subprocess.run(f"poetry run python {project_dir}/app.py", shell=True, check=False)
+    if process.returncode > 0:
+        logger.error(
+            "Execution of command `python app.py` was unsuccessful. Exited with code '%s'",
+            process.returncode,
+        )
+        # TODO: inform ui
+
+
 #### TODO: move to DB DIR
 # def setup_database(project_dir: str) -> None:
 #     """Set up the database."""

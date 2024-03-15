@@ -13,7 +13,7 @@ def root() -> dict:
     """
     Root GET
     """
-    return {"msg": "Hello, World!"}
+    return {"msg": "Frontend is not build yet"}
 
 
 app.include_router(root_router)
