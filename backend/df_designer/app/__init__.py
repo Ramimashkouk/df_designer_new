@@ -32,6 +32,7 @@ class Process:
         if self.process is None:  # Check if a process has been started
             raise RuntimeError("Cannot stop a process '{self.pid}' that has not started yet.")
         try:
+            logger.debug("Terminating process '%s'", self.pid)
             self.process.terminate()
         except ProcessLookupError as exception:
             raise RuntimeError(f"Process '{self.pid}' not found. It may have already exited.") from exception

@@ -22,7 +22,7 @@ def build_bot(
 
     if preset in presets_build_file:
         command_to_run = presets_build_file[preset]["cmd"]
-        logger.info("Executing command for preset '%s': %s", preset, command_to_run)
+        logger.debug("Executing command for preset '%s': %s", preset, command_to_run)
 
         process = subprocess.run(command_to_run, shell=True, check=False)
         if process.returncode > 0:
@@ -47,7 +47,7 @@ def run_bot(
 
     if preset in presets_run_file:
         command_to_run = presets_run_file[preset]["cmd"]
-        logger.info("Executing command for preset '%s': %s", preset, command_to_run)
+        logger.debug("Executing command for preset '%s': %s", preset, command_to_run)
 
         process = subprocess.run(command_to_run, shell=True, check=False)
         if process.returncode > 0:

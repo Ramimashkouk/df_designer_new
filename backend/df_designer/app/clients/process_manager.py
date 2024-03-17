@@ -20,5 +20,11 @@ class ProcessManager:
         return list(self.processes.keys())[-1]
 
     def stop(self, pid):
-        if pid in self.processes:
-            self.processes[pid].stop()
+        self.processes[pid].stop()
+        self.processes.pop(pid)
+
+    def check_status(self, pid):
+        return self.processes[pid].check_status()
+
+    def get_all(self):
+        return self.processes
